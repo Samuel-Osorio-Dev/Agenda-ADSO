@@ -9,15 +9,72 @@ export default function FormularioContacto({ onAgregar }) {
     etiqueta: "",
   });
 
+  // Estado para almacenar los mensajes de error de validación por cada campo
+  const [errores, setErrores] = useState({
+    nombre: "",
+    telefono: "",
+    correo: "",
+  });
+
+  // Estado que indica si el formulario está enviando la información al servidor
+  const [enviando, setEnviando] = useState(false);
+
   const onChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const onSubmit = (e) => {
+  // Función encargada de validar todos los campos del formulario
+  function validarFormulario() {
+    const nuevosErrores = { nombre: "", telefono: "", correo: "" };
+
+    // Validación del campo nombre
+    if (!form.nombre.trim()) {
+      nuevosErrores.nombre = "El nombre es obligatorio.";
+    }
+
+    // Validar campo del teléfono
+    if (!form.telefono.trim()) {
+      nuevosErrores.telefono = "El teléfono es obligatorio.";
+    } else if (form.telefono.trim().length < 7) {
+      //reto: mínimo 7 caracteres
+      nuevosErrores.telefono = "El teléfono debe tener al menos 7 dígitos.";
+    }
+
+    // Validar campo del correo
+    if (!form.correo.trim()) {
+      nuevosErrores.correo = "El correo es obligatorio.";
+    } else if (!form.correo.includes("@")) {
+      nuevosErrores.correo = "El correo debe contener @.";
+    }
+
+    setErrores(nuevosErrores);
+
+    return (
+      !nuevosErrores.nombre &&
+      !nuevosErrores.telefono &&
+      !nuevosErrores.correo
+    );
+  }
+
+  const onSubmit = async (e) => {
     e.preventDefault();
-    if (!form.nombre || !form.telefono || !form.correo) return;
-    onAgregar(form);
-    setForm({ nombre: "", telefono: "", correo: "", empresa: "", etiqueta: "" });
+
+    // Si falla la validación, sale sin guardar
+    const esValido = validarFormulario();
+    if (!esValido) return;
+
+    try {
+      setEnviando(true);
+      await new Promise((r) => setTimeout(r, 2000));
+      await onAgregar(form);
+
+      // Limpiamos el formulario si todo está bien
+      setForm({ nombre: "", telefono: "", correo: "", empresa: "", etiqueta: "" });
+      setErrores({ nombre: "", telefono: "", correo: "" });
+    } finally {
+      // Apagamos el estado enviando al terminar
+      setEnviando(false);
+    }
   };
 
   return (
@@ -34,6 +91,10 @@ export default function FormularioContacto({ onAgregar }) {
             value={form.nombre}
             onChange={onChange}
           />
+          {/* Mensaje de error para el campo nombre */}
+          {errores.nombre && (
+            <p className="mt-1 text-xs text-red-600">{errores.nombre}</p>
+          )}
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono *</label>
@@ -44,6 +105,10 @@ export default function FormularioContacto({ onAgregar }) {
             value={form.telefono}
             onChange={onChange}
           />
+          {/* Mensaje de error para el campo teléfono */}
+          {errores.telefono && (
+            <p className="mt-1 text-xs text-red-600">{errores.telefono}</p>
+          )}
         </div>
       </div>
 
@@ -56,6 +121,10 @@ export default function FormularioContacto({ onAgregar }) {
           value={form.correo}
           onChange={onChange}
         />
+        {/* Mensaje de error para el campo correo */}
+        {errores.correo && (
+          <p className="mt-1 text-xs text-red-600">{errores.correo}</p>
+        )}
       </div>
 
       <div>
@@ -80,8 +149,13 @@ export default function FormularioContacto({ onAgregar }) {
         />
       </div>
 
-      <button className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-xl font-semibold shadow-sm transition">
-        Agregar contacto
+      {/* Botón con estado enviando */}
+      <button
+        type="submit"
+        disabled={enviando}
+        className="bg-purple-600 hover:bg-purple-700 disabled:bg-purple-300 disabled:cursor-not-allowed text-white px-6 py-3 rounded-xl font-semibold shadow-sm transition"
+      >
+        {enviando ? "Guardando..." : "Agregar contacto"}
       </button>
     </form>
   );

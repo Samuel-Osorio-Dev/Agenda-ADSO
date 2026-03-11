@@ -9,12 +9,28 @@
       "etiqueta": "profe"
     },
     {
-      "id": "b589",
-      "nombre": "Samuel Osorio Palacio",
-      "telefono": "234234234234",
+      "id": "c7f7",
+      "nombre": "Samuel Osorio",
+      "telefono": "3223232323",
       "correo": "soydesarrollador.amen@gmail",
-      "empresa": "Realsum",
-      "etiqueta": "Programador Senior Millonario"
+      "empresa": "",
+      "etiqueta": ""
+    },
+    {
+      "id": "a5a8",
+      "nombre": "Samuel Osorio",
+      "telefono": "3223232323",
+      "correo": "soydesarrollador.amen@gmail",
+      "empresa": "",
+      "etiqueta": ""
+    },
+    {
+      "id": "5e12",
+      "nombre": "Samuel Osorio Palacio",
+      "telefono": "34343434343",
+      "correo": "soydesarrollador.amen@gmail",
+      "empresa": "",
+      "etiqueta": ""
     }
   ],
   "$schema": "./node_modules/json-server/schema.json"

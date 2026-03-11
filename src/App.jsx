@@ -12,11 +12,14 @@ export default function App() {
   useEffect(() => {
     async function cargarContactos() {
       try {
+        setCargando(true);
+        setError("");
         const data = await listarContactos();
         setContactos(data);
       } catch (error) {
-        console.error(error);
-        setError("No se pudo cargar la lista de contactos");
+        console.error("Error al cargar contactos:", error);
+        // Mensaje amigable al usuario
+        setError("No se pudieron cargar los contactos. Verifica que el servidor esté encendido e intenta de nuevo.");
       } finally {
         setCargando(false);
       }
@@ -24,25 +27,30 @@ export default function App() {
     cargarContactos();
   }, []);
 
-  // POST
+  // POST — async para trabajar bien con el estado enviando del formulario
   const agregarContacto = async (nuevo) => {
     try {
+      setError("");
       const creado = await crearContacto(nuevo);
       setContactos((prev) => [...prev, creado]);
     } catch (error) {
-      console.error(error);
-      setError("No se pudo agregar el contacto");
+      console.error("Error al crear contacto:", error);
+      // Mensaje amigable al usuario
+      setError("No se pudo guardar el contacto. Verifica tu conexión o el estado del servidor e intenta nuevamente.");
+      throw error;
     }
   };
 
   // DELETE
   const eliminarContacto = async (id) => {
     try {
+      setError("");
       await eliminarContactoPorId(id);
       setContactos((prev) => prev.filter((c) => c.id !== id));
     } catch (error) {
-      console.error(error);
-      setError("No se pudo eliminar el contacto");
+      console.error("Error al eliminar contacto:", error);
+      // Mensaje amigable al usuario
+      setError("No se pudo eliminar el contacto. Vuelve a intentarlo o verifica el servidor.");
     }
   };
 
@@ -53,14 +61,15 @@ export default function App() {
           Programa ADSO
         </p>
         <h1 className="text-4xl md:text-5xl font-black text-gray-900 mt-2">
-          Agenda ADSO v5
+          Agenda ADSO v6
         </h1>
         <p className="text-gray-500 mt-1">
-          Gestión de contactos conectada a una API local con JSON Server.
+          Gestión de contactos conectada a una API local con JSON Server, ahora con validaciones y mejor experiencia de usuario.
         </p>
       </header>
 
       <section className="max-w-6xl mx-auto px-6 py-8 space-y-6">
+        {/* Error global de API */}
         {error && (
           <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
             {error}
