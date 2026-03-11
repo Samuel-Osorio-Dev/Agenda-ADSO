@@ -1,6 +1,6 @@
 // src/App.jsx
 // Componente principal de la Agenda ADSO.
-// Maneja los contactos, estados de carga y errores.
+// Maneja los contactos, estados de carga, errores, búsqueda y ordenamiento.
 
 import { useEffect, useState } from "react";
 import { listarContactos, crearContacto, eliminarContactoPorId } from "./api.js";
@@ -12,6 +12,12 @@ export default function App() {
   const [contactos, setContactos] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
+
+  // === NUEVOS ESTADOS CLASE 10 ===
+  // Estado para el término de búsqueda digitado por el usuario
+  const [busqueda, setBusqueda] = useState("");
+  // Estado para el orden: true = A-Z, false = Z-A
+  const [ordenAsc, setOrdenAsc] = useState(true);
 
   // Carga los contactos al iniciar la app
   useEffect(() => {
@@ -56,6 +62,31 @@ export default function App() {
     }
   };
 
+  // === LÓGICA DE BÚSQUEDA Y ORDENAMIENTO (CLASE 10) ===
+  // 1. Filtramos por nombre, correo, etiqueta y teléfono (mini reto)
+  const contactosFiltrados = contactos.filter((c) => {
+    const termino = busqueda.toLowerCase();
+    const nombre   = c.nombre.toLowerCase();
+    const correo   = c.correo.toLowerCase();
+    const etiqueta = (c.etiqueta || "").toLowerCase();
+    const telefono = (c.telefono || "").toLowerCase();
+    return (
+      nombre.includes(termino) ||
+      correo.includes(termino) ||
+      etiqueta.includes(termino) ||
+      telefono.includes(termino)
+    );
+  });
+
+  // 2. Ordenamos los contactos filtrados por nombre
+  const contactosOrdenados = [...contactosFiltrados].sort((a, b) => {
+    const nombreA = a.nombre.toLowerCase();
+    const nombreB = b.nombre.toLowerCase();
+    if (nombreA < nombreB) return ordenAsc ? -1 : 1;
+    if (nombreA > nombreB) return ordenAsc ? 1 : -1;
+    return 0;
+  });
+
   return (
     <main className="min-h-screen bg-gray-50">
       {/* Encabezado usando APP_INFO desde config.js */}
@@ -85,20 +116,48 @@ export default function App() {
 
         <FormularioContacto onAgregar={agregarContacto} />
 
-        <div className="space-y-4">
-          {contactos.length === 0 && !cargando && (
-            <p className="text-gray-500 text-sm">
-              No hay contactos aún. Agrega el primero usando el formulario.
-            </p>
-          )}
-          {contactos.map((c) => (
-            <ContactoCard
-              key={c.id}
-              {...c}
-              onEliminar={() => eliminarContacto(c.id)}
-            />
-          ))}
+        {/* Buscador y botón de orden */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
+          <input
+            type="text"
+            className="w-full md:flex-1 rounded-xl border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm outline-none"
+            placeholder="Buscar por nombre, correo o etiqueta..."
+            value={busqueda}
+            onChange={(e) => setBusqueda(e.target.value)}
+          />
+          <button
+            type="button"
+            onClick={() => setOrdenAsc((prev) => !prev)}
+            className="bg-gray-100 text-gray-700 text-sm px-4 py-2 rounded-xl border border-gray-200 hover:bg-gray-200"
+          >
+            {ordenAsc ? "Ordenar Z-A" : "Ordenar A-Z"}
+          </button>
         </div>
+
+        {/* Mini reto 2: cantidad de resultados */}
+        <p className="text-sm text-gray-500">
+          Mostrando {contactosOrdenados.length} {contactosOrdenados.length === 1 ? "contacto" : "contactos"}
+        </p>
+
+        {/* Listado de contactos filtrados y ordenados */}
+        <section className="space-y-4">
+          {contactosOrdenados.length === 0 ? (
+            <p className="text-sm text-gray-500">
+              No se encontraron contactos que coincidan con la búsqueda.
+            </p>
+          ) : (
+            contactosOrdenados.map((c) => (
+              <ContactoCard
+                key={c.id}
+                nombre={c.nombre}
+                telefono={c.telefono}
+                correo={c.correo}
+                etiqueta={c.etiqueta}
+                onEliminar={() => eliminarContacto(c.id)}
+              />
+            ))
+          )}
+        </section>
       </section>
     </main>
   );
