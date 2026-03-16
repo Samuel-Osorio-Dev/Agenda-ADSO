@@ -1,4 +1,4 @@
-export default function ContactoCard({ nombre, telefono, correo, empresa, etiqueta, onEliminar }) {
+export default function ContactoCard({ nombre, telefono, correo, empresa, etiqueta, onEliminar, onEditar }) {
   return (
     <div className="bg-white shadow-sm border border-gray-200 rounded-2xl p-6 flex items-start justify-between">
       <div className="space-y-1">
@@ -23,12 +23,25 @@ export default function ContactoCard({ nombre, telefono, correo, empresa, etique
           </span>
         )}
       </div>
-      <button
-        onClick={onEliminar}
-        className="bg-red-500 hover:bg-red-600 text-white text-sm px-4 py-2 rounded-lg shadow transition"
-      >
-        Eliminar
-      </button>
+      {/* Botones de acción */}
+      <div className="flex gap-2">
+        {/* Botón Editar */}
+        <button
+          type="button"
+          onClick={onEditar}
+          className="bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm px-4 py-2 rounded-lg border border-gray-300 transition"
+        >
+          Editar
+        </button>
+        {/* Botón Eliminar */}
+        <button
+          type="button"
+          onClick={onEliminar}
+          className="bg-red-500 hover:bg-red-600 text-white text-sm px-4 py-2 rounded-lg shadow transition"
+        >
+          Eliminar
+        </button>
+      </div>
     </div>
   );
 }

@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-export default function FormularioContacto({ onAgregar }) {
+export default function FormularioContacto({ onAgregar, onActualizar, contactoEnEdicion, onCancelarEdicion }) {
   const [form, setForm] = useState({
     nombre: "",
     telefono: "",
@@ -19,6 +19,23 @@ export default function FormularioContacto({ onAgregar }) {
   // Estado que indica si el formulario está enviando la información al servidor
   const [enviando, setEnviando] = useState(false);
 
+  // Carga los datos del contacto en edición cuando cambia
+  useEffect(() => {
+    if (contactoEnEdicion) {
+      setForm({
+        nombre: contactoEnEdicion.nombre || "",
+        telefono: contactoEnEdicion.telefono || "",
+        correo: contactoEnEdicion.correo || "",
+        empresa: contactoEnEdicion.empresa || "",
+        etiqueta: contactoEnEdicion.etiqueta || "",
+      });
+      setErrores({ nombre: "", telefono: "", correo: "" });
+    } else {
+      setForm({ nombre: "", telefono: "", correo: "", empresa: "", etiqueta: "" });
+      setErrores({ nombre: "", telefono: "", correo: "" });
+    }
+  }, [contactoEnEdicion]);
+
   const onChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
@@ -36,7 +53,6 @@ export default function FormularioContacto({ onAgregar }) {
     if (!form.telefono.trim()) {
       nuevosErrores.telefono = "El teléfono es obligatorio.";
     } else if (form.telefono.trim().length < 7) {
-      //reto: mínimo 7 caracteres
       nuevosErrores.telefono = "El teléfono debe tener al menos 7 dígitos.";
     }
 
@@ -59,27 +75,38 @@ export default function FormularioContacto({ onAgregar }) {
   const onSubmit = async (e) => {
     e.preventDefault();
 
-    // Si falla la validación, sale sin guardar
     const esValido = validarFormulario();
     if (!esValido) return;
 
     try {
       setEnviando(true);
       await new Promise((r) => setTimeout(r, 2000));
-      await onAgregar(form);
 
-      // Limpiamos el formulario si todo está bien
-      setForm({ nombre: "", telefono: "", correo: "", empresa: "", etiqueta: "" });
-      setErrores({ nombre: "", telefono: "", correo: "" });
+      if (contactoEnEdicion) {
+        // MODO EDICIÓN
+        await onActualizar({ ...form, id: contactoEnEdicion.id });
+        setForm({ nombre: "", telefono: "", correo: "", empresa: "", etiqueta: "" });
+        setErrores({ nombre: "", telefono: "", correo: "" });
+        if (onCancelarEdicion) onCancelarEdicion();
+      } else {
+        // MODO CREAR
+        await onAgregar(form);
+        setForm({ nombre: "", telefono: "", correo: "", empresa: "", etiqueta: "" });
+        setErrores({ nombre: "", telefono: "", correo: "" });
+      }
     } finally {
-      // Apagamos el estado enviando al terminar
       setEnviando(false);
     }
   };
 
+  // Texto dinámico según el modo
+  const estaEnEdicion = Boolean(contactoEnEdicion);
+  const tituloFormulario = estaEnEdicion ? "Editar contacto" : "Nuevo contacto";
+  const textoBoton = estaEnEdicion ? "Guardar cambios" : "Agregar contacto";
+
   return (
     <form onSubmit={onSubmit} className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 space-y-4">
-      <h2 className="text-lg font-bold text-gray-800">Nuevo contacto</h2>
+      <h2 className="text-lg font-bold text-gray-800">{tituloFormulario}</h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
@@ -91,7 +118,6 @@ export default function FormularioContacto({ onAgregar }) {
             value={form.nombre}
             onChange={onChange}
           />
-          {/* Mensaje de error para el campo nombre */}
           {errores.nombre && (
             <p className="mt-1 text-xs text-red-600">{errores.nombre}</p>
           )}
@@ -105,7 +131,6 @@ export default function FormularioContacto({ onAgregar }) {
             value={form.telefono}
             onChange={onChange}
           />
-          {/* Mensaje de error para el campo teléfono */}
           {errores.telefono && (
             <p className="mt-1 text-xs text-red-600">{errores.telefono}</p>
           )}
@@ -121,7 +146,6 @@ export default function FormularioContacto({ onAgregar }) {
           value={form.correo}
           onChange={onChange}
         />
-        {/* Mensaje de error para el campo correo */}
         {errores.correo && (
           <p className="mt-1 text-xs text-red-600">{errores.correo}</p>
         )}
@@ -149,14 +173,26 @@ export default function FormularioContacto({ onAgregar }) {
         />
       </div>
 
-      {/* Botón con estado enviando */}
-      <button
-        type="submit"
-        disabled={enviando}
-        className="bg-purple-600 hover:bg-purple-700 disabled:bg-purple-300 disabled:cursor-not-allowed text-white px-6 py-3 rounded-xl font-semibold shadow-sm transition"
-      >
-        {enviando ? "Guardando..." : "Agregar contacto"}
-      </button>
+      {/* Botones */}
+      <div className="pt-2 flex flex-col md:flex-row md:items-center gap-3">
+        <button
+          type="submit"
+          disabled={enviando}
+          className="bg-purple-600 hover:bg-purple-700 disabled:bg-purple-300 disabled:cursor-not-allowed text-white px-6 py-3 rounded-xl font-semibold shadow-sm transition"
+        >
+          {enviando ? "Guardando..." : textoBoton}
+        </button>
+        {/* Botón cancelar edición — solo visible en modo edición */}
+        {estaEnEdicion && (
+          <button
+            type="button"
+            onClick={onCancelarEdicion}
+            className="bg-gray-100 text-gray-700 px-6 py-3 rounded-xl border border-gray-300 hover:bg-gray-200 text-sm"
+          >
+            Cancelar edición
+          </button>
+        )}
+      </div>
     </form>
   );
 }

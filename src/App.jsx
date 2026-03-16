@@ -1,9 +1,9 @@
 // src/App.jsx
 // Componente principal de la Agenda ADSO.
-// Maneja los contactos, estados de carga, errores, búsqueda y ordenamiento.
+// Maneja los contactos, estados de carga, errores, búsqueda, ordenamiento y edición.
 
 import { useEffect, useState } from "react";
-import { listarContactos, crearContacto, eliminarContactoPorId } from "./api.js";
+import { listarContactos, crearContacto, actualizarContacto, eliminarContactoPorId } from "./api.js";
 import { APP_INFO } from "./config";
 import FormularioContacto from "./components/FormularioContacto";
 import ContactoCard from "./components/ContactoCard";
@@ -13,11 +13,12 @@ export default function App() {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
 
-  // === NUEVOS ESTADOS CLASE 10 ===
   // Estado para el término de búsqueda digitado por el usuario
   const [busqueda, setBusqueda] = useState("");
   // Estado para el orden: true = A-Z, false = Z-A
   const [ordenAsc, setOrdenAsc] = useState(true);
+  // Estado para saber qué contacto estamos editando (o null si no editamos)
+  const [contactoEnEdicion, setContactoEnEdicion] = useState(null);
 
   // Carga los contactos al iniciar la app
   useEffect(() => {
@@ -50,20 +51,51 @@ export default function App() {
     }
   };
 
+  // Actualiza un contacto existente
+  const onActualizarContacto = async (contactoActualizado) => {
+    try {
+      setError("");
+      const actualizado = await actualizarContacto(contactoActualizado.id, contactoActualizado);
+      // Reemplazamos el contacto actualizado en la lista
+      setContactos((prev) =>
+        prev.map((c) => (c.id === actualizado.id ? actualizado : c))
+      );
+      // Salimos del modo edición
+      setContactoEnEdicion(null);
+    } catch (error) {
+      console.error("Error al actualizar contacto:", error);
+      setError("No se pudo actualizar el contacto. Verifica tu conexión o el servidor e intenta nuevamente.");
+      throw error;
+    }
+  };
+
   // Elimina un contacto por id
   const eliminarContacto = async (id) => {
     try {
       setError("");
       await eliminarContactoPorId(id);
       setContactos((prev) => prev.filter((c) => c.id !== id));
+      // Si el contacto eliminado estaba en edición, cancelamos la edición
+      setContactoEnEdicion((actual) => actual && actual.id === id ? null : actual);
     } catch (error) {
       console.error("Error al eliminar contacto:", error);
       setError("No se pudo eliminar el contacto. Vuelve a intentarlo o verifica el servidor.");
     }
   };
 
-  // === LÓGICA DE BÚSQUEDA Y ORDENAMIENTO (CLASE 10) ===
-  // 1. Filtramos por nombre, correo, etiqueta y teléfono (mini reto)
+  // Activa el modo edición con el contacto seleccionado
+  const onEditarClick = (contacto) => {
+    setContactoEnEdicion(contacto);
+    setError("");
+  };
+
+  // Cancela la edición y vuelve a modo crear
+  const onCancelarEdicion = () => {
+    setContactoEnEdicion(null);
+  };
+
+  // === LÓGICA DE BÚSQUEDA Y ORDENAMIENTO ===
+  // 1. Filtramos por nombre, correo, etiqueta y teléfono
   const contactosFiltrados = contactos.filter((c) => {
     const termino = busqueda.toLowerCase();
     const nombre   = c.nombre.toLowerCase();
@@ -114,7 +146,13 @@ export default function App() {
           </div>
         )}
 
-        <FormularioContacto onAgregar={agregarContacto} />
+        {/* Formulario para crear o editar contactos */}
+        <FormularioContacto
+          onAgregar={agregarContacto}
+          onActualizar={onActualizarContacto}
+          contactoEnEdicion={contactoEnEdicion}
+          onCancelarEdicion={onCancelarEdicion}
+        />
 
         {/* Buscador y botón de orden */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
@@ -134,7 +172,7 @@ export default function App() {
           </button>
         </div>
 
-        {/* Mini reto 2: cantidad de resultados */}
+        {/* Cantidad de resultados */}
         <p className="text-sm text-gray-500">
           Mostrando {contactosOrdenados.length} {contactosOrdenados.length === 1 ? "contacto" : "contactos"}
         </p>
@@ -152,8 +190,10 @@ export default function App() {
                 nombre={c.nombre}
                 telefono={c.telefono}
                 correo={c.correo}
+                empresa={c.empresa}
                 etiqueta={c.etiqueta}
                 onEliminar={() => eliminarContacto(c.id)}
+                onEditar={() => onEditarClick(c)}
               />
             ))
           )}

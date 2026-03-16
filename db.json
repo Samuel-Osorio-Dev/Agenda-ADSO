@@ -9,12 +9,12 @@
       "etiqueta": "profe"
     },
     {
-      "id": "a6cc",
       "nombre": "Samuel Osorio",
       "telefono": "34343434343",
       "correo": "soydesarrollador.amen@gmail",
-      "empresa": "",
-      "etiqueta": ""
+      "empresa": "Realsum",
+      "etiqueta": "Encargado del Área de Formularios",
+      "id": "a6cc"
     },
     {
       "id": "8969",
@@ -25,12 +25,12 @@
       "etiqueta": ""
     },
     {
-      "id": "1ac8",
       "nombre": "Carlos Chaparro",
       "telefono": "3456789208",
       "correo": "soycaliche@gmail.com",
-      "empresa": "",
-      "etiqueta": ""
+      "empresa": "EquiProd",
+      "etiqueta": "gerente de recursos inhumanos",
+      "id": "1ac8"
     }
   ],
   "$schema": "./node_modules/json-server/schema.json"
