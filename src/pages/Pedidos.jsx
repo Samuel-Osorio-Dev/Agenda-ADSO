@@ -25,6 +25,7 @@ export default function Pedidos() {
         const data = await listarPedidos();
         setPedidos(data);
       } catch (e) {
+        console.error(e);
         setError("No se pudieron cargar los pedidos. Verifica tu conexión.");
       } finally {
         setCargando(false);
@@ -39,6 +40,7 @@ export default function Pedidos() {
       const creado = await crearPedido(nuevo);
       setPedidos((prev) => [...prev, creado]);
     } catch (e) {
+      console.error(e);
       setError("No se pudo guardar el pedido.");
       throw e;
     }
@@ -52,7 +54,9 @@ export default function Pedidos() {
         prev.map((p) => (p.id === actualizado.id ? actualizado : p))
       );
       setPedidoEnEdicion(null);
+      setVista("pedidos");
     } catch (e) {
+      console.error(e);
       setError("No se pudo actualizar el pedido.");
       throw e;
     }
@@ -67,16 +71,15 @@ export default function Pedidos() {
         actual && actual.id === id ? null : actual
       );
     } catch (e) {
+      console.error(e);
       setError("No se pudo eliminar el pedido.");
     }
   };
 
-  // 🔥 FILTRO CORREGIDO (ANTI-ERRORES)
   const pedidosFiltrados = pedidos
     .filter((p) => filtroEstado === "todos" || (p.estado || "") === filtroEstado)
     .filter((p) => {
       const t = busqueda.toLowerCase();
-
       return (
         (p.cliente || "").toLowerCase().includes(t) ||
         (p.direccion || "").toLowerCase().includes(t) ||
@@ -155,7 +158,12 @@ export default function Pedidos() {
             ) : (
               <>
                 {vista === "crear" && (
-                  <FormularioPedido onAgregar={agregarPedido} />
+                  <FormularioPedido
+                    onAgregar={agregarPedido}
+                    onActualizar={onActualizarPedido}
+                    pedidoEnEdicion={pedidoEnEdicion}
+                    onCancelarEdicion={() => setPedidoEnEdicion(null)}
+                  />
                 )}
 
                 {vista === "pedidos" && (
@@ -167,6 +175,18 @@ export default function Pedidos() {
                       onChange={(e) => setBusqueda(e.target.value)}
                       className="mb-3 w-full border p-2 rounded"
                     />
+
+                    {/* 🔥 FILTRO POR ESTADO (ARREGLA EL WARNING) */}
+                    <select
+                      value={filtroEstado}
+                      onChange={(e) => setFiltroEstado(e.target.value)}
+                      className="mb-3 w-full border p-2 rounded"
+                    >
+                      <option value="todos">Todos</option>
+                      <option value="pendiente">Pendiente</option>
+                      <option value="entregado">Entregado</option>
+                      <option value="cancelado">Cancelado</option>
+                    </select>
 
                     {pedidosFiltrados.length === 0 ? (
                       <p>No hay pedidos</p>
@@ -180,7 +200,10 @@ export default function Pedidos() {
                           pedido={p.pedido}
                           estado={p.estado}
                           onEliminar={() => eliminarPedido(p.id)}
-                          onEditar={() => setPedidoEnEdicion(p)}
+                          onEditar={() => {
+                            setPedidoEnEdicion(p);
+                            setVista("crear");
+                          }}
                         />
                       ))
                     )}
